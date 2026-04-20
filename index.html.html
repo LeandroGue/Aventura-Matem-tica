@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Suma y Resta Aventura Pro</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        :root { 
+            --sky-color: #87CEEB; 
+            --accent: #0984e3;
+            --correct: #2ecc71;
+            --wrong: #e74c3c;
+        }
+        
+        body { 
+            background: var(--sky-color); font-family: 'Segoe UI', sans-serif; 
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; height: 100vh; overflow: hidden; transition: background 1s;
+        }
+
+        .celestial { position: absolute; top: 30px; right: 50px; width: 70px; height: 70px; border-radius: 50%; z-index: -1; }
+        .sun { background: #FFD700; box-shadow: 0 0 40px #FFF700; }
+        .moon { background: #f5f3ce; box-shadow: 0 0 30px #ffffff; }
+
+        /* BOTÓN VOLVER AL MENÚ (DURANTE EL JUEGO) */
+        .btn-exit {
+            position: absolute; top: 20px; left: 20px; padding: 10px 15px;
+            background: rgba(255,255,255,0.3); border: 2px solid white; color: white;
+            border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 14px;
+            transition: 0.3s; z-index: 100;
+        }
+        .btn-exit:hover { background: white; color: var(--accent); }
+
+        .progress-container {
+            width: 100%; background: #f0f2f5; height: 15px; border-radius: 10px;
+            margin-bottom: 25px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #progress { width: 0%; height: 100%; background: linear-gradient(90deg, #00cec9, #0984e3); transition: 0.5s; }
+
+        .game-card { 
+            background: white; padding: 35px; border-radius: 40px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+            width: 850px; text-align: center; position: relative; z-index: 10;
+        }
+
+        .instruction-tag {
+            display: inline-block; background: #fff9e6; color: #d35400;
+            padding: 10px 25px; border-radius: 50px; font-weight: bold;
+            margin-bottom: 20px; border: 2px solid #ffeaa7;
+        }
+
+        .math-flex { 
+            display: flex; justify-content: center; align-items: center; 
+            gap: 20px; min-height: 280px; margin-bottom: 20px;
+        }
+
+        .box-unit { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 170px; }
+
+        .num-display { 
+            font-size: 45px; font-weight: 900; background: #f8f9fa; color: #2d3436;
+            width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;
+            border-radius: 20px; border: 4px solid #dee2e6;
+        }
+
+        .objects-grid { 
+            width: 160px; height: 160px; background: #f8f9fa; 
+            border-radius: 20px; border: 3px dashed #ced4da; padding: 10px;
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+            gap: 5px; justify-items: center; align-items: center;
+        }
+
+        .item-sprite { 
+            font-size: 28px; display: flex; align-items: center; justify-content: center;
+            background: white; border-radius: 10px; width: 100%; height: 100%;
+            box-shadow: 0 3px 0 rgba(0,0,0,0.05); position: relative; cursor: pointer; transition: 0.1s;
+        }
+        .item-sprite.removed { opacity: 0.3; filter: grayscale(1); }
+        .item-sprite.removed::after { content: "❌"; position: absolute; font-size: 16px; color: red; }
+
+        .operator-tag { font-size: 35px; font-weight: bold; color: #636e72; padding: 10px; }
+
+        .controls-row { display: flex; gap: 8px; width: 100%; }
+        .btn-action { 
+            flex: 1; padding: 10px 5px; border: none; border-radius: 12px;
+            font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.1s;
+        }
+        .btn-add { background: #e3f2fd; color: #1976d2; box-shadow: 0 4px 0 #bbdefb; }
+        .btn-sub { background: #ffebee; color: #c62828; box-shadow: 0 4px 0 #ffcdd2; }
+
+        .keypad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+        .key { 
+            padding: 15px; font-size: 24px; font-weight: bold; border: none;
+            border-radius: 15px; background: var(--accent); color: white; cursor: pointer;
+            box-shadow: 0 5px 0 #06528e;
+        }
+        .key:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .overlay-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--sky-color); z-index: 500; display: flex; 
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .result-box {
+            background: white; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            text-align: center; width: 500px; display: flex; flex-direction: column; gap: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="celestial-body" class="celestial"></div>
+
+    <button id="btn-exit-game" class="btn-exit" style="display: none;" onclick="location.reload()">🏠 Volver al Menú</button>
+
+    <div id="menu" class="overlay-screen">
+        <h1 style="color: white; font-size: 45px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">Aventura Matemática</h1>
+        <button class="key" style="width: 300px; margin: 10px; padding: 20px; font-size: 28px; background: var(--correct); box-shadow: 0 6px 0 #27ae60;" onclick="init('suma')">SUMA ➕</button>
+        <button class="key" style="width: 300px; margin: 10px; padding: 20px; font-size: 28px; background: var(--wrong); box-shadow: 0 6px 0 #c0392b;" onclick="init('resta')">RESTA ➖</button>
+    </div>
+
+    <div id="end-screen" class="overlay-screen" style="display: none; background: rgba(0,0,0,0.8);">
+        <div class="result-box">
+            <h2 style="font-size: 35px; color: #0984e3; margin: 0;">¡Misión Cumplida!</h2>
+            <div style="font-size: 28px; font-weight: bold;">Aciertos: <span id="final-hits" style="color: var(--correct);">0</span> ✅</div>
+            <div style="font-size: 28px; font-weight: bold;">Errores: <span id="final-misses" style="color: var(--wrong);">0</span> ❌</div>
+            <button class="key" style="padding: 20px; font-size: 22px; margin-top: 20px;" onclick="location.reload()">JUGAR OTRA VEZ</button>
+        </div>
+    </div>
+
+    <div class="game-card" id="game" style="display:none;">
+        <div class="progress-container"><div id="progress"></div></div>
+        <div id="tip" class="instruction-tag">Preparando...</div>
+
+        <div class="math-flex">
+            <div class="box-unit">
+                <div class="num-display" id="dA">?</div>
+                <div class="objects-grid" id="gridA"></div>
+                <div class="controls-row" id="controlsA">
+                    <button class="btn-action btn-add" onclick="addObj('gridA')">+ Poner</button>
+                    <button class="btn-action btn-sub" onclick="removeObj('gridA')">- Quitar</button>
+                </div>
+            </div>
+            <div id="sign" class="operator-tag">+</div>
+            <div class="box-unit" id="unitB">
+                <div class="num-display" id="dB">?</div>
+                <div class="objects-grid" id="gridB"></div>
+                <div class="controls-row" id="controlsB">
+                    <button class="btn-action btn-add" onclick="addObj('gridB')">+ Poner</button>
+                    <button class="btn-action btn-sub" onclick="removeObj('gridB')">- Quitar</button>
+                </div>
+            </div>
+            <div class="operator-tag">=</div>
+            <div class="box-unit">
+                <div class="num-display" id="resBox" style="background: #fff9e6; border-color: #f1c40f; color: #d35400;">?</div>
+                <div style="font-weight: bold; color: #b2bec3; font-size: 12px; margin-top: 5px;">RESPUESTA</div>
+            </div>
+        </div>
+
+        <div id="feedback" style="height: 35px; font-size: 24px; font-weight: bold; margin-bottom: 15px;"></div>
+        <div class="keypad" id="pad"></div>
+    </div>
+
+    <script>
+        let mode = 'suma', a, b, round = 0, hits = 0;
+        const sprites = ["🍎", "🍪", "💎", "⭐", "🚀"];
+        let currentIcon = "🍎";
+
+        function init(m) {
+            mode = m;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('btn-exit-game').style.display = 'block';
+            play();
+        }
+
+        const pad = document.getElementById('pad');
+        for(let i=0; i<=10; i++) {
+            let btn = document.createElement('button'); 
+            btn.className = 'key key-btn'; 
+            btn.innerText = i;
+            btn.onclick = () => check(i); 
+            pad.appendChild(btn);
+        }
+
+        function play() {
+            if(round >= 10) { 
+                document.getElementById('game').style.display = 'none';
+                document.getElementById('btn-exit-game').style.display = 'none';
+                document.getElementById('end-screen').style.display = 'flex';
+                document.getElementById('final-hits').innerText = hits;
+                document.getElementById('final-misses').innerText = 10 - hits;
+                return; 
+            }
+            
+            document.getElementById('progress').style.width = (round * 10) + "%";
+            document.getElementById('resBox').innerText = "?";
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('gridA').innerHTML = ""; 
+            document.getElementById('gridB').innerHTML = "";
+            currentIcon = sprites[Math.floor(Math.random()*sprites.length)];
+            Array.from(document.getElementsByClassName('key-btn')).forEach(k => k.disabled = false);
+
+            if(mode === 'suma') {
+                a = Math.floor(Math.random()*5)+1; b = Math.floor(Math.random()*5)+1;
+                document.getElementById('unitB').style.display = 'flex';
+                document.getElementById('sign').innerText = "+";
+                document.getElementById('tip').innerText = "👉 Pon o quita objetos para contar la suma";
+                document.getElementById('controlsA').innerHTML = `<button class="btn-action btn-add" onclick="addObj('gridA')">+ Poner</button><button class="btn-action btn-sub" onclick="removeObj('gridA')">- Quitar</button>`;
+                document.getElementById('controlsB').style.display = 'flex';
+            } else {
+                a = Math.floor(Math.random()*5)+5; b = Math.floor(Math.random()*4)+1;
+                document.getElementById('unitB').style.display = 'none';
+                document.getElementById('sign').innerText = "- " + b;
+                document.getElementById('tip').innerText = "👉 Tacha los objetos o usa los botones";
+                document.getElementById('controlsA').innerHTML = `<button class="btn-action btn-sub" onclick="markRemoved()">❌ Tachar</button><button class="btn-action btn-add" onclick="undoRemoved()">↩️ Deshacer</button>`;
+                for(let i=0; i<a; i++) {
+                    let s = document.createElement('div'); 
+                    s.className = 'item-sprite'; 
+                    s.innerText = currentIcon;
+                    s.onclick = function() { this.classList.toggle('removed'); };
+                    document.getElementById('gridA').appendChild(s);
+                }
+            }
+            document.getElementById('dA').innerText = a;
+            document.getElementById('dB').innerText = b;
+        }
+
+        function addObj(gridId) {
+            const grid = document.getElementById(gridId);
+            if(grid.children.length < 9) {
+                let s = document.createElement('div'); s.className = 'item-sprite'; s.innerText = currentIcon;
+                grid.appendChild(s);
+            }
+        }
+
+        function removeObj(gridId) {
+            const grid = document.getElementById(gridId);
+            if(grid.length !== 0) grid.lastChild && grid.removeChild(grid.lastChild);
+        }
+
+        function markRemoved() {
+            const items = document.getElementById('gridA').children;
+            for(let i=items.length-1; i>=0; i--) { if(!items[i].classList.contains('removed')) { items[i].classList.add('removed'); break; } }
+        }
+
+        function undoRemoved() {
+            const items = document.getElementById('gridA').children;
+            for(let i=0; i<items.length; i++) { if(items[i].classList.contains('removed')) { items[i].classList.remove('removed'); break; } }
+        }
+
+        function check(v) {
+            const target = (mode === 'suma') ? (a + b) : (a - b);
+            const f = document.getElementById('feedback');
+            Array.from(document.getElementsByClassName('key-btn')).forEach(k => k.disabled = true);
+            if(v === target) { hits++; f.innerText="¡PERFECTO! ✨"; f.style.color="var(--correct)"; }
+            else { f.innerText=`¡CASI! ERA EL ${target} 🚀`; f.style.color="var(--wrong)"; }
+            document.getElementById('resBox').innerText = target;
+            round++;
+            setTimeout(play, 1800);
+        }
+
+        function setTimeTheme() {
+            const h = new Date().getHours();
+            const isDay = h > 7 && h < 19;
+            document.body.style.setProperty('--sky-color', isDay ? '#87CEEB' : '#2c3e50');
+            document.getElementById('celestial-body').className = 'celestial ' + (isDay ? 'sun' : 'moon');
+        }
+        setTimeTheme();
+    </script>
+</body>
+</html>
