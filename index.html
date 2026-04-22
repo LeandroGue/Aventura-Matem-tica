@@ -1,8 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-T2ZX6GP6');</script>
     <meta charset="UTF-8">
-    <title>Aventura Matemática - Cuadros Grandes</title>
+    <title>Aventura Matemática - Versión Final</title>
     <style>
         * { box-sizing: border-box; }
         :root { --sky-day: #87CEEB; --sky-night: #2c3e50; --accent: #0984e3; --correct: #2ecc71; --wrong: #e74c3c; }
@@ -13,7 +18,7 @@
             margin: 0; height: 100vh; overflow: hidden; transition: 0.8s;
         }
 
-        /* CONTROLES CELESTIALES VERTICALES */
+        /* CONTROLES CELESTIALES */
         .celestial-container {
             position: absolute; top: 30px; right: 50px;
             display: flex; flex-direction: column; align-items: center; gap: 12px;
@@ -21,6 +26,8 @@
         }
         .astro-big { width: 80px; height: 80px; border-radius: 50%; transition: 0.5s; }
         .sun-big { background: #FFD700; box-shadow: 0 0 40px #FFF700; }
+        
+        /* LUNA LIMPIA (Sin el emoji de media luna adentro) */
         .moon-big { background: #f5f3ce; box-shadow: 0 0 30px #ffffff; }
 
         .theme-btn {
@@ -29,7 +36,6 @@
             display: flex; align-items: center; justify-content: center; font-size: 18px;
             transition: 0.3s;
         }
-        .theme-btn:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
 
         .btn-nav {
             position: absolute; top: 20px; left: 20px; padding: 10px 20px;
@@ -42,31 +48,31 @@
         .night-mode .game-card { background: #2d3436; color: white; }
         .day-mode .game-card { background: white; color: #333; }
 
-        /* PANTALLAS */
-        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #feedback-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; cursor: pointer; }
-
         .progress-container { width: 100%; background: #ddd; height: 14px; border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
         #progress { width: 0%; height: 100%; background: var(--correct); transition: 0.5s; }
 
-        /* CUADROS MÁS GRANDES PARA BLOQUES */
+        /* CUADROS GRANDES DE 220PX PARA BLOQUES */
         .objects-grid { 
-            width: 220px; height: 220px; /* Aumentado de 160px a 220px */
+            width: 220px; height: 220px; 
             background: rgba(128,128,128,0.1); border-radius: 20px; 
             border: 3px dashed #999; display: grid; 
             grid-template-columns: repeat(3, 1fr); padding: 12px; gap: 8px; 
         }
         
-        .item-sprite { font-size: 35px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item-sprite { font-size: 35px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 12px; }
         .item-sprite.removed { opacity: 0.2; position: relative; }
         .item-sprite.removed::after { content: "❌"; position: absolute; font-size: 20px; color: red; }
 
-        .key { padding: 15px; font-size: 24px; font-weight: bold; border: none; border-radius: 15px; background: #636e72; color: white; cursor: pointer; box-shadow: 0 5px 0 #2d3436; }
+        .key { padding: 15px; font-size: 24px; font-weight: bold; border: none; border-radius: 15px; background: #636e72; color: white; cursor: pointer; }
         .btn-action { padding: 10px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; }
+
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #feedback-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; cursor: pointer; }
     </style>
 </head>
 <body class="day-mode">
-
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T2ZX6GP6"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="celestial-container">
         <div id="astro-visual" class="astro-big sun-big"></div>
         <button class="theme-btn" onclick="setTheme(false)">☀️</button>
