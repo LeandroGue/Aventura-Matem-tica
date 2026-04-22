@@ -2,272 +2,278 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Suma y Resta Aventura Pro</title>
+    <title>Aventura Matemática - Cuadros Grandes</title>
     <style>
         * { box-sizing: border-box; }
-
-        :root { 
-            --sky-color: #87CEEB; 
-            --accent: #0984e3;
-            --correct: #2ecc71;
-            --wrong: #e74c3c;
-        }
+        :root { --sky-day: #87CEEB; --sky-night: #2c3e50; --accent: #0984e3; --correct: #2ecc71; --wrong: #e74c3c; }
         
         body { 
-            background: var(--sky-color); font-family: 'Segoe UI', sans-serif; 
+            background: var(--sky-day); font-family: 'Segoe UI', sans-serif; 
             display: flex; align-items: center; justify-content: center;
-            margin: 0; height: 100vh; overflow: hidden; transition: background 1s;
+            margin: 0; height: 100vh; overflow: hidden; transition: 0.8s;
         }
 
-        .celestial { position: absolute; top: 30px; right: 50px; width: 70px; height: 70px; border-radius: 50%; z-index: -1; }
-        .sun { background: #FFD700; box-shadow: 0 0 40px #FFF700; }
-        .moon { background: #f5f3ce; box-shadow: 0 0 30px #ffffff; }
+        /* CONTROLES CELESTIALES VERTICALES */
+        .celestial-container {
+            position: absolute; top: 30px; right: 50px;
+            display: flex; flex-direction: column; align-items: center; gap: 12px;
+            z-index: 1000;
+        }
+        .astro-big { width: 80px; height: 80px; border-radius: 50%; transition: 0.5s; }
+        .sun-big { background: #FFD700; box-shadow: 0 0 40px #FFF700; }
+        .moon-big { background: #f5f3ce; box-shadow: 0 0 30px #ffffff; }
 
-        /* BOTÓN VOLVER AL MENÚ (DURANTE EL JUEGO) */
-        .btn-exit {
-            position: absolute; top: 20px; left: 20px; padding: 10px 15px;
+        .theme-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: 2px solid white;
+            background: rgba(255,255,255,0.2); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
+            transition: 0.3s;
+        }
+        .theme-btn:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
+
+        .btn-nav {
+            position: absolute; top: 20px; left: 20px; padding: 10px 20px;
             background: rgba(255,255,255,0.3); border: 2px solid white; color: white;
-            border-radius: 15px; cursor: pointer; font-weight: bold; font-size: 14px;
-            transition: 0.3s; z-index: 100;
-        }
-        .btn-exit:hover { background: white; color: var(--accent); }
-
-        .progress-container {
-            width: 100%; background: #f0f2f5; height: 15px; border-radius: 10px;
-            margin-bottom: 25px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        }
-        #progress { width: 0%; height: 100%; background: linear-gradient(90deg, #00cec9, #0984e3); transition: 0.5s; }
-
-        .game-card { 
-            background: white; padding: 35px; border-radius: 40px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
-            width: 850px; text-align: center; position: relative; z-index: 10;
+            border-radius: 15px; cursor: pointer; font-weight: bold; z-index: 100;
         }
 
-        .instruction-tag {
-            display: inline-block; background: #fff9e6; color: #d35400;
-            padding: 10px 25px; border-radius: 50px; font-weight: bold;
-            margin-bottom: 20px; border: 2px solid #ffeaa7;
-        }
+        /* TABLERO */
+        .game-card { padding: 35px; border-radius: 40px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); width: 950px; text-align: center; position: relative; z-index: 10; transition: 0.5s; }
+        .night-mode .game-card { background: #2d3436; color: white; }
+        .day-mode .game-card { background: white; color: #333; }
 
-        .math-flex { 
-            display: flex; justify-content: center; align-items: center; 
-            gap: 20px; min-height: 280px; margin-bottom: 20px;
-        }
+        /* PANTALLAS */
+        .overlay-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #feedback-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: white; cursor: pointer; }
 
-        .box-unit { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 170px; }
+        .progress-container { width: 100%; background: #ddd; height: 14px; border-radius: 10px; margin-bottom: 25px; overflow: hidden; }
+        #progress { width: 0%; height: 100%; background: var(--correct); transition: 0.5s; }
 
-        .num-display { 
-            font-size: 45px; font-weight: 900; background: #f8f9fa; color: #2d3436;
-            width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;
-            border-radius: 20px; border: 4px solid #dee2e6;
-        }
-
+        /* CUADROS MÁS GRANDES PARA BLOQUES */
         .objects-grid { 
-            width: 160px; height: 160px; background: #f8f9fa; 
-            border-radius: 20px; border: 3px dashed #ced4da; padding: 10px;
-            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-            gap: 5px; justify-items: center; align-items: center;
+            width: 220px; height: 220px; /* Aumentado de 160px a 220px */
+            background: rgba(128,128,128,0.1); border-radius: 20px; 
+            border: 3px dashed #999; display: grid; 
+            grid-template-columns: repeat(3, 1fr); padding: 12px; gap: 8px; 
         }
+        
+        .item-sprite { font-size: 35px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item-sprite.removed { opacity: 0.2; position: relative; }
+        .item-sprite.removed::after { content: "❌"; position: absolute; font-size: 20px; color: red; }
 
-        .item-sprite { 
-            font-size: 28px; display: flex; align-items: center; justify-content: center;
-            background: white; border-radius: 10px; width: 100%; height: 100%;
-            box-shadow: 0 3px 0 rgba(0,0,0,0.05); position: relative; cursor: pointer; transition: 0.1s;
-        }
-        .item-sprite.removed { opacity: 0.3; filter: grayscale(1); }
-        .item-sprite.removed::after { content: "❌"; position: absolute; font-size: 16px; color: red; }
-
-        .operator-tag { font-size: 35px; font-weight: bold; color: #636e72; padding: 10px; }
-
-        .controls-row { display: flex; gap: 8px; width: 100%; }
-        .btn-action { 
-            flex: 1; padding: 10px 5px; border: none; border-radius: 12px;
-            font-weight: bold; font-size: 13px; cursor: pointer; transition: 0.1s;
-        }
-        .btn-add { background: #e3f2fd; color: #1976d2; box-shadow: 0 4px 0 #bbdefb; }
-        .btn-sub { background: #ffebee; color: #c62828; box-shadow: 0 4px 0 #ffcdd2; }
-
-        .keypad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-        .key { 
-            padding: 15px; font-size: 24px; font-weight: bold; border: none;
-            border-radius: 15px; background: var(--accent); color: white; cursor: pointer;
-            box-shadow: 0 5px 0 #06528e;
-        }
-        .key:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .overlay-screen { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--sky-color); z-index: 500; display: flex; 
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        .result-box {
-            background: white; padding: 40px; border-radius: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-            text-align: center; width: 500px; display: flex; flex-direction: column; gap: 20px;
-        }
+        .key { padding: 15px; font-size: 24px; font-weight: bold; border: none; border-radius: 15px; background: #636e72; color: white; cursor: pointer; box-shadow: 0 5px 0 #2d3436; }
+        .btn-action { padding: 10px 15px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin: 5px; }
     </style>
 </head>
-<body>
+<body class="day-mode">
 
-    <div id="celestial-body" class="celestial"></div>
+    <div class="celestial-container">
+        <div id="astro-visual" class="astro-big sun-big"></div>
+        <button class="theme-btn" onclick="setTheme(false)">☀️</button>
+        <button class="theme-btn" onclick="setTheme(true)">🌙</button>
+    </div>
+    
+    <button id="btn-menu-top" class="btn-nav" style="display:none" onclick="backToMenu()">🏠 Menú</button>
 
-    <button id="btn-exit-game" class="btn-exit" style="display: none;" onclick="location.reload()">🏠 Volver al Menú</button>
-
-    <div id="menu" class="overlay-screen">
-        <h1 style="color: white; font-size: 45px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">Aventura Matemática</h1>
-        <button class="key" style="width: 300px; margin: 10px; padding: 20px; font-size: 28px; background: var(--correct); box-shadow: 0 6px 0 #27ae60;" onclick="init('suma')">SUMA ➕</button>
-        <button class="key" style="width: 300px; margin: 10px; padding: 20px; font-size: 28px; background: var(--wrong); box-shadow: 0 6px 0 #c0392b;" onclick="init('resta')">RESTA ➖</button>
+    <div id="feedback-overlay" onclick="nextRound()">
+        <div id="f-emoji" style="font-size: 120px;"></div>
+        <h1 id="f-title" style="font-size: 80px; margin:10px;"></h1>
+        <p id="f-sub" style="font-size: 30px;"></p>
+        <p style="margin-top:40px; opacity:0.8">Toca para continuar 👉</p>
     </div>
 
-    <div id="end-screen" class="overlay-screen" style="display: none; background: rgba(0,0,0,0.8);">
-        <div class="result-box">
-            <h2 style="font-size: 35px; color: #0984e3; margin: 0;">¡Misión Cumplida!</h2>
-            <div style="font-size: 28px; font-weight: bold;">Aciertos: <span id="final-hits" style="color: var(--correct);">0</span> ✅</div>
-            <div style="font-size: 28px; font-weight: bold;">Errores: <span id="final-misses" style="color: var(--wrong);">0</span> ❌</div>
-            <button class="key" style="padding: 20px; font-size: 22px; margin-top: 20px;" onclick="location.reload()">JUGAR OTRA VEZ</button>
+    <div id="login-screen" class="overlay-screen">
+        <div class="game-card" style="width:400px; background: white; color: #333;">
+            <h1 style="color:var(--accent)">¡Hola! 👋</h1>
+            <input type="text" id="user-name" placeholder="Tu nombre" style="padding:15px; width:100%; font-size:20px; margin-bottom:20px; border-radius:10px; border:2px solid #ddd">
+            <button class="key" style="width:100%; background:var(--accent)" onclick="login()">ENTRAR</button>
         </div>
     </div>
 
-    <div class="game-card" id="game" style="display:none;">
+    <div id="menu" class="overlay-screen" style="display:none">
+        <div class="game-card" style="width:500px; background: white; color: #333;">
+            <h1>Hola, <span class="user-label" style="color:var(--accent)"></span></h1>
+            <button class="key" style="width:100%; background:var(--correct); margin-bottom:15px;" onclick="start('suma')">SUMAS ➕</button>
+            <button class="key" style="width:100%; background:var(--wrong); margin-bottom:15px;" onclick="start('resta')">RESTAS ➖</button>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-action" style="background:#636e72; color:white; flex:1" onclick="toggleHistory()">📊 Historial</button>
+                <button class="btn-action" style="background:#b2bec3; color:#2d3436; flex:1" onclick="logout()">👤 Cambiar Usuario</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="summary-screen" class="overlay-screen" style="display:none; background: rgba(0,0,0,0.9);">
+        <div class="game-card" style="width:450px; background: white; color: #333;">
+            <h1 id="s-title"></h1>
+            <div style="font-size:100px;" id="s-emoji"></div>
+            <p style="font-size:24px">Aciertos: <b id="s-hits"></b> de 10</p>
+            <button class="key" style="width:100%; margin-top:20px; background:var(--accent)" onclick="backToMenu()">VOLVER AL INICIO</button>
+        </div>
+    </div>
+
+    <div id="game" class="game-card" style="display:none">
         <div class="progress-container"><div id="progress"></div></div>
-        <div id="tip" class="instruction-tag">Preparando...</div>
-
-        <div class="math-flex">
-            <div class="box-unit">
-                <div class="num-display" id="dA">?</div>
-                <div class="objects-grid" id="gridA"></div>
-                <div class="controls-row" id="controlsA">
-                    <button class="btn-action btn-add" onclick="addObj('gridA')">+ Poner</button>
-                    <button class="btn-action btn-sub" onclick="removeObj('gridA')">- Quitar</button>
-                </div>
+        <div style="display:flex; justify-content:center; align-items:center; gap:30px; min-height:350px;">
+            <div>
+                <div style="font-size:50px; font-weight:900" id="dA"></div>
+                <div id="gridA" class="objects-grid"></div>
+                <div id="ctrlA" style="margin-top:10px"></div>
             </div>
-            <div id="sign" class="operator-tag">+</div>
-            <div class="box-unit" id="unitB">
-                <div class="num-display" id="dB">?</div>
-                <div class="objects-grid" id="gridB"></div>
-                <div class="controls-row" id="controlsB">
-                    <button class="btn-action btn-add" onclick="addObj('gridB')">+ Poner</button>
-                    <button class="btn-action btn-sub" onclick="removeObj('gridB')">- Quitar</button>
-                </div>
+            <div id="sign" style="font-size:60px; font-weight:bold;"></div>
+            <div id="unitB">
+                <div style="font-size:50px; font-weight:900" id="dB"></div>
+                <div id="gridB" class="objects-grid"></div>
+                <div id="ctrlB" style="margin-top:10px"></div>
             </div>
-            <div class="operator-tag">=</div>
-            <div class="box-unit">
-                <div class="num-display" id="resBox" style="background: #fff9e6; border-color: #f1c40f; color: #d35400;">?</div>
-                <div style="font-weight: bold; color: #b2bec3; font-size: 12px; margin-top: 5px;">RESPUESTA</div>
+            <div style="font-size:60px;">=</div>
+            <div>
+                <div id="resBox" style="width:120px; height:120px; border:5px solid #f1c40f; display:flex; align-items:center; justify-content:center; font-size:60px; border-radius:25px; background: rgba(128,128,128,0.1);">?</div>
+                <p style="font-weight:bold; margin-top:10px;">RESULTADO</p>
             </div>
         </div>
+        <div id="keypad" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-top: 30px;"></div>
+    </div>
 
-        <div id="feedback" style="height: 35px; font-size: 24px; font-weight: bold; margin-bottom: 15px;"></div>
-        <div class="keypad" id="pad"></div>
+    <div id="history-screen" class="overlay-screen" style="display:none; background:rgba(0,0,0,0.8)">
+        <div class="game-card" style="width:400px; background:white; color:#333">
+            <h2>Historial de <span class="user-label"></span></h2>
+            <div id="h-list" style="max-height:300px; overflow-y:auto; text-align:left; margin-bottom:20px"></div>
+            <button class="key" style="width:100%; background:#e17055" onclick="toggleHistory()">CERRAR</button>
+        </div>
     </div>
 
     <script>
-        let mode = 'suma', a, b, round = 0, hits = 0;
-        const sprites = ["🍎", "🍪", "💎", "⭐", "🚀"];
-        let currentIcon = "🍎";
+        let currentUser = localStorage.getItem('mathUser') || "";
+        let mode = "", a, b, round = 0, hits = 0, currentIcon = "🍎";
+        const sprites = ["🍎", "⭐", "🚀", "🍕", "🍪", "💎", "⚽"];
 
-        function init(m) {
-            mode = m;
+        function setTheme(dark) {
+            const body = document.body;
+            const astro = document.getElementById('astro-visual');
+            if(dark) {
+                body.className = "night-mode";
+                body.style.background = "var(--sky-night)";
+                astro.className = "astro-big moon-big";
+            } else {
+                body.className = "day-mode";
+                body.style.background = "var(--sky-day)";
+                astro.className = "astro-big sun-big";
+            }
+            localStorage.setItem('theme', dark ? 'dark' : 'light');
+        }
+        setTheme(localStorage.getItem('theme') === 'dark');
+
+        if(currentUser) showMenu();
+
+        function login() {
+            let n = document.getElementById('user-name').value.trim();
+            if(!n) return;
+            currentUser = n; localStorage.setItem('mathUser', n);
+            showMenu();
+        }
+        function logout() { localStorage.removeItem('mathUser'); location.reload(); }
+
+        function showMenu() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('menu').style.display = 'flex';
+            document.getElementById('btn-menu-top').style.display = 'none';
+            document.getElementById('summary-screen').style.display = 'none';
+            document.querySelectorAll('.user-label').forEach(el => el.innerText = currentUser);
+        }
+
+        function start(m) {
+            mode = m; round = 0; hits = 0;
             document.getElementById('menu').style.display = 'none';
             document.getElementById('game').style.display = 'block';
-            document.getElementById('btn-exit-game').style.display = 'block';
+            document.getElementById('btn-menu-top').style.display = 'block';
             play();
         }
 
-        const pad = document.getElementById('pad');
-        for(let i=0; i<=10; i++) {
-            let btn = document.createElement('button'); 
-            btn.className = 'key key-btn'; 
-            btn.innerText = i;
-            btn.onclick = () => check(i); 
-            pad.appendChild(btn);
-        }
-
         function play() {
-            if(round >= 10) { 
-                document.getElementById('game').style.display = 'none';
-                document.getElementById('btn-exit-game').style.display = 'none';
-                document.getElementById('end-screen').style.display = 'flex';
-                document.getElementById('final-hits').innerText = hits;
-                document.getElementById('final-misses').innerText = 10 - hits;
-                return; 
-            }
-            
+            if(round >= 10) return finish();
             document.getElementById('progress').style.width = (round * 10) + "%";
             document.getElementById('resBox').innerText = "?";
-            document.getElementById('feedback').innerText = "";
-            document.getElementById('gridA').innerHTML = ""; 
-            document.getElementById('gridB').innerHTML = "";
+            document.getElementById('gridA').innerHTML = ""; document.getElementById('gridB').innerHTML = "";
             currentIcon = sprites[Math.floor(Math.random()*sprites.length)];
-            Array.from(document.getElementsByClassName('key-btn')).forEach(k => k.disabled = false);
 
             if(mode === 'suma') {
                 a = Math.floor(Math.random()*5)+1; b = Math.floor(Math.random()*5)+1;
-                document.getElementById('unitB').style.display = 'flex';
+                document.getElementById('unitB').style.display = 'block';
                 document.getElementById('sign').innerText = "+";
-                document.getElementById('tip').innerText = "👉 Pon o quita objetos para contar la suma";
-                document.getElementById('controlsA').innerHTML = `<button class="btn-action btn-add" onclick="addObj('gridA')">+ Poner</button><button class="btn-action btn-sub" onclick="removeObj('gridA')">- Quitar</button>`;
-                document.getElementById('controlsB').style.display = 'flex';
+                setupGrid('ctrlA', 'gridA'); setupGrid('ctrlB', 'gridB');
             } else {
                 a = Math.floor(Math.random()*5)+5; b = Math.floor(Math.random()*4)+1;
                 document.getElementById('unitB').style.display = 'none';
                 document.getElementById('sign').innerText = "- " + b;
-                document.getElementById('tip').innerText = "👉 Tacha los objetos o usa los botones";
-                document.getElementById('controlsA').innerHTML = `<button class="btn-action btn-sub" onclick="markRemoved()">❌ Tachar</button><button class="btn-action btn-add" onclick="undoRemoved()">↩️ Deshacer</button>`;
-                for(let i=0; i<a; i++) {
-                    let s = document.createElement('div'); 
-                    s.className = 'item-sprite'; 
-                    s.innerText = currentIcon;
-                    s.onclick = function() { this.classList.toggle('removed'); };
+                document.getElementById('ctrlA').innerHTML = `<button class="btn-action" style="background:#e67e22; color:white" onclick="tachar()">❌ Tachar ${b}</button>`;
+                for(let i=0; i<a; i++){
+                    let s = document.createElement('div'); s.className='item-sprite'; s.innerText=currentIcon;
+                    s.onclick = function(){ this.classList.toggle('removed'); };
                     document.getElementById('gridA').appendChild(s);
                 }
             }
-            document.getElementById('dA').innerText = a;
-            document.getElementById('dB').innerText = b;
+            document.getElementById('dA').innerText = a; document.getElementById('dB').innerText = b;
         }
 
-        function addObj(gridId) {
-            const grid = document.getElementById(gridId);
-            if(grid.children.length < 9) {
-                let s = document.createElement('div'); s.className = 'item-sprite'; s.innerText = currentIcon;
-                grid.appendChild(s);
+        function setupGrid(cid, gid) {
+            document.getElementById(cid).innerHTML = `
+                <button class="btn-action" style="background:#0984e3; color:white" onclick="add('${gid}')">+ Poner</button>
+                <button class="btn-action" style="background:#e17055; color:white" onclick="rem('${gid}')">- Quitar</button>`;
+        }
+        function add(id) { let g = document.getElementById(id); if(g.children.length < 9){ let s = document.createElement('div'); s.className='item-sprite'; s.innerText=currentIcon; g.appendChild(s); } }
+        function rem(id) { let g = document.getElementById(id); if(g.lastChild) g.removeChild(g.lastChild); }
+        function tachar() { let items = Array.from(document.getElementById('gridA').children).filter(i => !i.classList.contains('removed')); if(items.length > 0) items[items.length-1].classList.add('removed'); }
+
+        const kp = document.getElementById('keypad');
+        if(kp.children.length === 0) {
+            for(let i=0; i<=10; i++) {
+                let b = document.createElement('button'); b.className='key'; b.innerText=i;
+                b.onclick = () => check(i); kp.appendChild(b);
             }
         }
 
-        function removeObj(gridId) {
-            const grid = document.getElementById(gridId);
-            if(grid.length !== 0) grid.lastChild && grid.removeChild(grid.lastChild);
+        function check(val) {
+            const target = mode==='suma' ? (a+b) : (a-b);
+            document.getElementById('resBox').innerText = val;
+            const overlay = document.getElementById('feedback-overlay');
+            if(val === target) {
+                hits++; overlay.style.background = 'rgba(46, 204, 113, 0.95)';
+                document.getElementById('f-emoji').innerText = "🌟";
+                document.getElementById('f-title').innerText = "¡EXCELENTE!";
+                document.getElementById('f-sub').innerText = `¡Es el número ${target}!`;
+            } else {
+                overlay.style.background = 'rgba(231, 76, 60, 0.95)';
+                document.getElementById('f-emoji').innerText = "🚀";
+                document.getElementById('f-title').innerText = "¡CASI!";
+                document.getElementById('f-sub').innerText = `La respuesta era ${target}`;
+            }
+            setTimeout(() => { overlay.style.display = 'flex'; }, 400);
         }
 
-        function markRemoved() {
-            const items = document.getElementById('gridA').children;
-            for(let i=items.length-1; i>=0; i--) { if(!items[i].classList.contains('removed')) { items[i].classList.add('removed'); break; } }
+        function nextRound() { document.getElementById('feedback-overlay').style.display = 'none'; round++; play(); }
+
+        function finish() {
+            document.getElementById('game').style.display = 'none';
+            document.getElementById('summary-screen').style.display = 'flex';
+            document.getElementById('s-hits').innerText = hits;
+            document.getElementById('s-title').innerText = hits > 7 ? "¡LO LOGRASTE!" : "¡SIGUE PRACTICANDO!";
+            document.getElementById('s-emoji').innerText = hits > 7 ? "🏆✨" : "💪🍎";
+            
+            let h = JSON.parse(localStorage.getItem('mathH_' + currentUser)) || [];
+            h.unshift({ date: new Date().toLocaleDateString(), mode: mode.toUpperCase(), score: hits });
+            localStorage.setItem('mathH_' + currentUser, JSON.stringify(h.slice(0,10)));
         }
 
-        function undoRemoved() {
-            const items = document.getElementById('gridA').children;
-            for(let i=0; i<items.length; i++) { if(items[i].classList.contains('removed')) { items[i].classList.remove('removed'); break; } }
-        }
+        function backToMenu() { document.getElementById('game').style.display = 'none'; showMenu(); }
 
-        function check(v) {
-            const target = (mode === 'suma') ? (a + b) : (a - b);
-            const f = document.getElementById('feedback');
-            Array.from(document.getElementsByClassName('key-btn')).forEach(k => k.disabled = true);
-            if(v === target) { hits++; f.innerText="¡PERFECTO! ✨"; f.style.color="var(--correct)"; }
-            else { f.innerText=`¡CASI! ERA EL ${target} 🚀`; f.style.color="var(--wrong)"; }
-            document.getElementById('resBox').innerText = target;
-            round++;
-            setTimeout(play, 1800);
+        function toggleHistory() {
+            let s = document.getElementById('history-screen');
+            if(s.style.display === 'none') {
+                let h = JSON.parse(localStorage.getItem('mathH_' + currentUser)) || [];
+                document.getElementById('h-list').innerHTML = h.length ? h.map(i => `<div style="padding:10px; border-bottom:1px solid #eee"><b>${i.mode}</b>: ${i.score}/10 (${i.date})</div>`).join('') : "No hay partidas aún.";
+                s.style.display = 'flex';
+            } else { s.style.display = 'none'; }
         }
-
-        function setTimeTheme() {
-            const h = new Date().getHours();
-            const isDay = h > 7 && h < 19;
-            document.body.style.setProperty('--sky-color', isDay ? '#87CEEB' : '#2c3e50');
-            document.getElementById('celestial-body').className = 'celestial ' + (isDay ? 'sun' : 'moon');
-        }
-        setTimeTheme();
     </script>
 </body>
 </html>
